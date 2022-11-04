@@ -1,0 +1,21 @@
+services:
+  ope:
+    build:
+      context: ope
+    volumes:
+      - ./pbf:/pbf
+
+  time_machine:
+    build:
+      context: time_machine
+    environment:
+      - CONFIG=/srv/app/conf.yaml
+    volumes:
+      - ./time_machine/sql:/sql
+      - ./time_machine:/srv/app
+      - ./conf.yaml:/srv/app/conf.yaml
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:

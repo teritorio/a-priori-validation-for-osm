@@ -6,7 +6,7 @@ Keep a copy a OpenStreetMap dat while validating update using rules and manual r
 
 ## Build
 ```
-docker-compose build
+docker-compose --env-file .tools.env build
 ```
 
 ## Configure
@@ -15,8 +15,7 @@ Adjust config.yaml
 
 ## Start
 ```
-docker-compose up -d postgres
-docker-compose up -d api
+docker-compose up -d
 ```
 
 Enter postgres with
@@ -31,8 +30,10 @@ wget http://download.openstreetmap.fr/extracts/europe/france/aquitaine/gironde.s
 ```
 
 ```
-docker-compose run --rm ope ope /pbf/gironde-latest.osm.pbf /pbf/osm_base=o
-docker-compose exec -u postgres postgres bash -c "psql -c \"\\copy osm_base from '/pbf/osm_base.pgcopy'\""
+docker-compose --env-file .tools.env run --rm ope \
+    ope /pbf/gironde-latest.osm.pbf /pbf/osm_base=o
+docker-compose exec -u postgres postgres \
+    psql -c "\copy osm_base from '/pbf/osm_base.pgcopy'"
 ```
 
 ```
@@ -45,17 +46,19 @@ maxInterval=86400" > replication/configuration.txt
 
 ## Update
 ```
-osmosis --read-replication-interval workingDirectory=replication  --write-xml-change diff.osc.xml.bz2
-docker-compose run --rm ope ope -H /pbf/diff.osc.xml.bz2 /pbf/osm_changes=o
-docker-compose exec -u postgres postgres bash -c "psql -c \"\\copy osm_changes from '/pbf/osm_changes.pgcopy'\""
+osmosis --read-replication-interval workingDirectory=replication --write-xml-change diff.osc.xml.bz2
+docker-compose --env-file .tools.env run --rm ope \
+    ope -H /pbf/diff.osc.xml.bz2 /pbf/osm_changes=o
+docker-compose exec -u postgres postgres \
+    psql -c "\copy osm_changes from '/pbf/osm_changes.pgcopy'"
 rm -f pbf/diff.osc.xml.bz2 pbf/osm_changes.pgcopy
 ```
 
 Validation report
 ```
-docker-compose run --rm time_machine sh -c "ruby main.rb --changes-prune"
-docker-compose run --rm time_machine sh -c "ruby main.rb --apply_unclibled_changes"
-docker-compose run --rm time_machine sh -c "ruby main.rb --validate"
+docker-compose --env-file .tools.env run --rm time_machine ruby main.rb --changes-prune
+docker-compose --env-file .tools.env run --rm time_machine ruby main.rb --apply_unclibled_changes
+docker-compose --env-file .tools.env run --rm time_machine ruby main.rb --validate
 ```
 
 ## Dev
